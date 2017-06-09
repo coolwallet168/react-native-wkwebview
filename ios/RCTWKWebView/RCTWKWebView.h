@@ -31,6 +31,9 @@ shouldStartLoadForRequest:(NSMutableDictionary<NSString *, id> *)request
 @property (nonatomic, assign) BOOL automaticallyAdjustContentInsets;
 @property (nonatomic, assign) BOOL openNewWindowInWebView;
 @property (nonatomic, copy) NSString *injectedJavaScript;
+@property (nonatomic, copy) NSString *runJavaScriptAtDocumentStart;
+@property (nonatomic, copy) NSString *runJavaScriptAtDocumentEnd;
+@property (nonatomic, assign) BOOL runJavaScriptInMainFrameOnly;
 @property (nonatomic, assign) BOOL hideKeyboardAccessoryView;
 
 

@@ -182,6 +182,9 @@ var WKWebView = React.createClass({
      * Sets the JS to be injected when the webpage loads.
      */
     injectedJavaScript: PropTypes.string,
+    runJavaScriptAtDocumentStart: PropTypes.string,
+    runJavaScriptAtDocumentEnd: PropTypes.string,
+    runJavaScriptInMainFrameOnly: PropTypes.bool,
     /**
      * Allows custom handling of any webview requests by a JS handler. Return true
      * or false from this method to continue loading the request.
@@ -286,6 +289,9 @@ var WKWebView = React.createClass({
         style={webViewStyles}
         source={resolveAssetSource(source)}
         injectedJavaScript={this.props.injectedJavaScript}
+        runJavaScriptAtDocumentStart={this.props.runJavaScriptAtDocumentStart}
+        runJavaScriptAtDocumentEnd={this.props.runJavaScriptAtDocumentEnd}
+        runJavaScriptInMainFrameOnly={this.props.runJavaScriptInMainFrameOnly}
         bounces={this.props.bounces}
         scrollEnabled={this.props.scrollEnabled}
         contentInset={this.props.contentInset}

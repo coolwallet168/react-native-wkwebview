@@ -215,6 +215,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
       [_webView loadHTMLString:@"" baseURL:nil];
       return;
     }
+
     [self loadRequest:request];
   }
 }
@@ -309,7 +310,20 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
       return decisionHandler(WKNavigationActionPolicyCancel);
     }
   }
-  
+
+  WKUserContentController *userContentController = _webView.configuration.userContentController;
+  [userContentController removeAllUserScripts];
+
+  if (_runJavaScriptAtDocumentStart) {
+    WKUserScript *script = [[WKUserScript alloc] initWithSource:_runJavaScriptAtDocumentStart injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:_runJavaScriptInMainFrameOnly];
+    [userContentController addUserScript:script];
+  }
+
+  if (_runJavaScriptAtDocumentEnd) {
+    WKUserScript *script = [[WKUserScript alloc] initWithSource:_runJavaScriptAtDocumentEnd injectionTime:WKUserScriptInjectionTimeAtDocumentEnd forMainFrameOnly:_runJavaScriptInMainFrameOnly];
+    [userContentController addUserScript:script];
+  }
+
   if (_onLoadingStart) {
     // We have this check to filter out iframe requests and whatnot
     BOOL isTopFrame = [url isEqual:request.mainDocumentURL];

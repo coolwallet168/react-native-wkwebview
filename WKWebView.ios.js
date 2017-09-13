@@ -1,8 +1,6 @@
 'use strict';
 
-import React, {
-  PropTypes
-} from 'react';
+import PropTypes from 'prop-types'
 import ReactNative, {
   requireNativeComponent,
   EdgeInsetsPropType,
@@ -270,7 +268,7 @@ var WKWebView = React.createClass({
     });
 
     if (this.props.source && typeof this.props.source == 'object') {
-      var source = Object.assign({}, this.props.source, { 
+      var source = Object.assign({}, this.props.source, {
         sendCookies: this.props.sendCookies,
         customUserAgent: this.props.customUserAgent || this.props.userAgent
       });

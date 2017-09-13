@@ -1,6 +1,7 @@
 'use strict';
 
 import PropTypes from 'prop-types'
+import React, { Component } from 'react'
 import ReactNative, {
   requireNativeComponent,
   EdgeInsetsPropType,
@@ -15,6 +16,7 @@ import resolveAssetSource from 'react-native/Libraries/Image/resolveAssetSource'
 import deprecatedPropType from 'react-native/Libraries/Utilities/deprecatedPropType';
 import invariant from 'fbjs/lib/invariant';
 import keyMirror from 'fbjs/lib/keyMirror';
+
 var WKWebViewManager = NativeModules.WKWebViewManager;
 
 var BGWASH = 'rgba(255,255,255,0.8)';
@@ -37,19 +39,12 @@ const NavigationType = keyMirror({
 
 const JSNavigationScheme = 'react-js-navigation';
 
-type ErrorEvent = {
-  domain: any;
-  code: any;
-  description: any;
-}
-
-type Event = Object;
-
 var defaultRenderLoading = () => (
   <View style={styles.loadingView}>
     <ActivityIndicator />
   </View>
 );
+
 var defaultRenderError = (errorDomain, errorCode, errorDesc) => (
   <View style={styles.errorContainer}>
     <Text style={styles.errorTextTitle}>
@@ -71,168 +66,29 @@ var defaultRenderError = (errorDomain, errorCode, errorDesc) => (
  * Renders a native WebView.
  */
 
-var WKWebView = React.createClass({
-  statics: {
-    JSNavigationScheme: JSNavigationScheme,
-    NavigationType: NavigationType,
-  },
-  propTypes: {
-    ...View.propTypes,
-
-    html: deprecatedPropType(
-      PropTypes.string,
-      'Use the `source` prop instead.'
-    ),
-
-    url: deprecatedPropType(
-      PropTypes.string,
-      'Use the `source` prop instead.'
-    ),
-
-    /**
-     * Loads static html or a uri (with optional headers) in the WebView.
-     */
-    source: PropTypes.oneOfType([
-      PropTypes.shape({
-        /*
-         * The URI to load in the WebView. Can be a local or remote file.
-         */
-        uri: PropTypes.string,
-        /*
-         * The HTTP Method to use. Defaults to GET if not specified.
-         * NOTE: On Android, only GET and POST are supported.
-         */
-        method: PropTypes.string,
-        /*
-         * Additional HTTP headers to send with the request.
-         * NOTE: On Android, this can only be used with GET requests.
-         */
-        headers: PropTypes.object,
-        /*
-         * The HTTP body to send with the request. This must be a valid
-         * UTF-8 string, and will be sent exactly as specified, with no
-         * additional encoding (e.g. URL-escaping or base64) applied.
-         * NOTE: On Android, this can only be used with POST requests.
-         */
-        body: PropTypes.string,
-      }),
-      PropTypes.shape({
-        /*
-         * A static HTML page to display in the WebView.
-         */
-        html: PropTypes.string,
-        /*
-         * The base URL to be used for any relative links in the HTML.
-         */
-        baseUrl: PropTypes.string,
-      }),
-      /*
-       * Used internally by packager.
-       */
-      PropTypes.number,
-    ]),
-
-    /**
-     * Function that returns a view to show if there's an error.
-     */
-    renderError: PropTypes.func, // view to show if there's an error
-    /**
-     * Function that returns a loading indicator.
-     */
-    renderLoading: PropTypes.func,
-    /**
-     * Invoked when load finish
-     */
-    onLoad: PropTypes.func,
-    /**
-     * Invoked when load either succeeds or fails
-     */
-    onLoadEnd: PropTypes.func,
-    /**
-     * Invoked on load start
-     */
-    onLoadStart: PropTypes.func,
-    /**
-     * Invoked when load fails
-     */
-    onError: PropTypes.func,
-    /**
-     * Report the progress
-     */
-    onProgress: PropTypes.func,
-    /**
-     * Receive message from webpage
-     */
-    onMessage: PropTypes.func,
-    /**
-     * @platform ios
-     */
-    bounces: PropTypes.bool,
-    scrollEnabled: PropTypes.bool,
-    allowsBackForwardNavigationGestures: PropTypes.bool,
-    automaticallyAdjustContentInsets: PropTypes.bool,
-    contentInset: EdgeInsetsPropType,
-    onNavigationStateChange: PropTypes.func,
-    scalesPageToFit: PropTypes.bool,
-    startInLoadingState: PropTypes.bool,
-    style: View.propTypes.style,
-    /**
-     * Sets the JS to be injected when the webpage loads.
-     */
-    injectedJavaScript: PropTypes.string,
-    runJavaScriptAtDocumentStart: PropTypes.string,
-    runJavaScriptAtDocumentEnd: PropTypes.string,
-    runJavaScriptInMainFrameOnly: PropTypes.bool,
-    /**
-     * Allows custom handling of any webview requests by a JS handler. Return true
-     * or false from this method to continue loading the request.
-     * @platform ios
-     */
-    onShouldStartLoadWithRequest: PropTypes.func,
-    /**
-     * Copies cookies from sharedHTTPCookieStorage when calling loadRequest.
-     * Set this to true to emulate behavior of WebView component.
-     */
-    sendCookies: PropTypes.bool,
-    /**
-     * If set to true, target="_blank" or window.open will be opened in WebView, instead
-     * of new window. Default is false to be backward compatible.
-     */
-    openNewWindowInWebView: PropTypes.bool,
-    /**
-     * Hide the accessory view when the keyboard is open. Default is false to be
-     * backward compatible.
-     */
-    hideKeyboardAccessoryView: PropTypes.bool,
-    /**
-     * Sets the customized user agent by using of the WKWebView
-    */
-    customUserAgent: PropTypes.string,
-    userAgent: PropTypes.string,
-    /**
-     * A Boolean value that determines whether paging is enabled for the scroll view.
-    */
-    pagingEnabled: PropTypes.bool,
-    /**
-     * A Boolean value that sets whether diagonal scrolling is allowed.
-    */
-    directionalLockEnabled: PropTypes.bool,
-  },
-  getInitialState() {
-    return {
+class WKWebView extends Component {
+  constructor (props) {
+    super(props);
+    this.state = {
       viewState: WebViewState.IDLE,
-      lastErrorEvent: (null: ?ErrorEvent),
+      lastErrorEvent: null,
       startInLoadingState: true,
     };
-  },
 
-  componentWillMount: function() {
+    this._onLoadingStart = this._onLoadingStart.bind(this);
+    this._onLoadingError = this._onLoadingError.bind(this);
+    this._onLoadingFinish = this._onLoadingFinish.bind(this);
+    this._onProgress = this._onProgress.bind(this);
+    this._onMessage = this._onMessage.bind(this);
+  }
+
+  componentWillMount () {
     if (this.props.startInLoadingState) {
       this.setState({viewState: WebViewState.LOADING});
     }
-  },
+  }
 
-  render() {
+  render () {
     var otherView = null;
 
     if (this.state.viewState === WebViewState.LOADING) {
@@ -313,94 +169,94 @@ var WKWebView = React.createClass({
         {otherView}
       </View>
     );
-  },
+  }
 
   /**
    * Go forward one page in the webview's history.
    */
-  goForward: function() {
+  goForward () {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
       UIManager.RCTWKWebView.Commands.goForward,
       null
     );
-  },
+  }
 
   /**
    * Go back one page in the webview's history.
    */
-  goBack: function() {
+  goBack () {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
       UIManager.RCTWKWebView.Commands.goBack,
       null
     );
-  },
+  }
 
   /**
    * Indicating whether there is a back item in the back-forward list that can be navigated to
    */
-  canGoBack: function() {
+  canGoBack () {
     return WKWebViewManager.canGoBack(this.getWebViewHandle());
-  },
+  }
 
   /**
    * Indicating whether there is a forward item in the back-forward list that can be navigated to
    */
-  canGoForward: function() {
+  canGoForward () {
     return WKWebViewManager.canGoForward(this.getWebViewHandle());
-  },
+  }
 
   /**
    * Reloads the current page.
    */
-  reload: function() {
+  reload () {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
       UIManager.RCTWKWebView.Commands.reload,
       null
     );
-  },
+  }
 
   /**
    * Stop loading the current page.
    */
-  stopLoading: function() {
+  stopLoading () {
     UIManager.dispatchViewManagerCommand(
       this.getWebViewHandle(),
       UIManager.RCTWKWebView.Commands.stopLoading,
       null
     )
-  },
+  }
 
-  evaluateJavaScript: function(js) {
+  evaluateJavaScript (js) {
     return WKWebViewManager.evaluateJavaScript(this.getWebViewHandle(), js);
-  },
+  }
 
   /**
    * We return an event with a bunch of fields including:
    *  url, title, loading, canGoBack, canGoForward
    */
-  _updateNavigationState: function(event: Event) {
+  _updateNavigationState (event) {
     if (this.props.onNavigationStateChange) {
       this.props.onNavigationStateChange(event.nativeEvent);
     }
-  },
+  }
 
   /**
    * Returns the native webview node.
    */
-  getWebViewHandle: function(): any {
+  getWebViewHandle () {
     return ReactNative.findNodeHandle(this.refs[RCT_WEBVIEW_REF]);
-  },
+  }
 
-  _onLoadingStart: function(event: Event) {
+  _onLoadingStart (event) {
     var onLoadStart = this.props.onLoadStart;
     onLoadStart && onLoadStart(event);
     this._updateNavigationState(event);
-  },
+  }
 
-  _onLoadingError: function(event: Event) {
+  _onLoadingError (event) {
     event.persist(); // persist this event because we need to store it
     var {onError, onLoadEnd} = this.props;
     onError && onError(event);
@@ -411,9 +267,9 @@ var WKWebView = React.createClass({
       lastErrorEvent: event.nativeEvent,
       viewState: WebViewState.ERROR
     });
-  },
+  }
 
-  _onLoadingFinish: function(event: Event) {
+  _onLoadingFinish (event) {
     var {onLoad, onLoadEnd} = this.props;
     onLoad && onLoad(event);
     onLoadEnd && onLoadEnd(event);
@@ -421,18 +277,164 @@ var WKWebView = React.createClass({
       viewState: WebViewState.IDLE,
     });
     this._updateNavigationState(event);
-  },
+  }
 
-  _onProgress(event: Event) {
+  _onProgress (event) {
     var onProgress = this.props.onProgress;
     onProgress && onProgress(event.nativeEvent.progress);
-  },
+  }
 
-  _onMessage(event: Event) {
+  _onMessage (event) {
     var onMessage = this.props.onMessage;
     onMessage && onMessage(event.nativeEvent);
   }
-});
+}
+
+WKWebView.JSNavigationScheme = JSNavigationScheme
+WKWebView.NavigationType = NavigationType
+
+WKWebView.propTypes = {
+  ...View.propTypes,
+
+  html: deprecatedPropType(
+    PropTypes.string,
+    'Use the `source` prop instead.'
+  ),
+
+  url: deprecatedPropType(
+    PropTypes.string,
+    'Use the `source` prop instead.'
+  ),
+
+  /**
+   * Loads static html or a uri (with optional headers) in the WebView.
+   */
+  source: PropTypes.oneOfType([
+    PropTypes.shape({
+      /*
+       * The URI to load in the WebView. Can be a local or remote file.
+       */
+      uri: PropTypes.string,
+      /*
+       * The HTTP Method to use. Defaults to GET if not specified.
+       * NOTE: On Android, only GET and POST are supported.
+       */
+      method: PropTypes.string,
+      /*
+       * Additional HTTP headers to send with the request.
+       * NOTE: On Android, this can only be used with GET requests.
+       */
+      headers: PropTypes.object,
+      /*
+       * The HTTP body to send with the request. This must be a valid
+       * UTF-8 string, and will be sent exactly as specified, with no
+       * additional encoding (e.g. URL-escaping or base64) applied.
+       * NOTE: On Android, this can only be used with POST requests.
+       */
+      body: PropTypes.string,
+    }),
+    PropTypes.shape({
+      /*
+       * A static HTML page to display in the WebView.
+       */
+      html: PropTypes.string,
+      /*
+       * The base URL to be used for any relative links in the HTML.
+       */
+      baseUrl: PropTypes.string,
+    }),
+    /*
+     * Used internally by packager.
+     */
+    PropTypes.number,
+  ]),
+
+  /**
+   * Function that returns a view to show if there's an error.
+   */
+  renderError: PropTypes.func, // view to show if there's an error
+  /**
+   * Function that returns a loading indicator.
+   */
+  renderLoading: PropTypes.func,
+  /**
+   * Invoked when load finish
+   */
+  onLoad: PropTypes.func,
+  /**
+   * Invoked when load either succeeds or fails
+   */
+  onLoadEnd: PropTypes.func,
+  /**
+   * Invoked on load start
+   */
+  onLoadStart: PropTypes.func,
+  /**
+   * Invoked when load fails
+   */
+  onError: PropTypes.func,
+  /**
+   * Report the progress
+   */
+  onProgress: PropTypes.func,
+  /**
+   * Receive message from webpage
+   */
+  onMessage: PropTypes.func,
+  /**
+   * @platform ios
+   */
+  bounces: PropTypes.bool,
+  scrollEnabled: PropTypes.bool,
+  allowsBackForwardNavigationGestures: PropTypes.bool,
+  automaticallyAdjustContentInsets: PropTypes.bool,
+  contentInset: EdgeInsetsPropType,
+  onNavigationStateChange: PropTypes.func,
+  scalesPageToFit: PropTypes.bool,
+  startInLoadingState: PropTypes.bool,
+  style: View.propTypes.style,
+  /**
+   * Sets the JS to be injected when the webpage loads.
+   */
+  injectedJavaScript: PropTypes.string,
+  runJavaScriptAtDocumentStart: PropTypes.string,
+  runJavaScriptAtDocumentEnd: PropTypes.string,
+  runJavaScriptInMainFrameOnly: PropTypes.bool,
+  /**
+   * Allows custom handling of any webview requests by a JS handler. Return true
+   * or false from this method to continue loading the request.
+   * @platform ios
+   */
+  onShouldStartLoadWithRequest: PropTypes.func,
+  /**
+   * Copies cookies from sharedHTTPCookieStorage when calling loadRequest.
+   * Set this to true to emulate behavior of WebView component.
+   */
+  sendCookies: PropTypes.bool,
+  /**
+   * If set to true, target="_blank" or window.open will be opened in WebView, instead
+   * of new window. Default is false to be backward compatible.
+   */
+  openNewWindowInWebView: PropTypes.bool,
+  /**
+   * Hide the accessory view when the keyboard is open. Default is false to be
+   * backward compatible.
+   */
+  hideKeyboardAccessoryView: PropTypes.bool,
+  /**
+   * Sets the customized user agent by using of the WKWebView
+  */
+  customUserAgent: PropTypes.string,
+  userAgent: PropTypes.string,
+  /**
+   * A Boolean value that determines whether paging is enabled for the scroll view.
+  */
+  pagingEnabled: PropTypes.bool,
+  /**
+   * A Boolean value that sets whether diagonal scrolling is allowed.
+  */
+  directionalLockEnabled: PropTypes.bool,
+}
 
 var RCTWKWebView = requireNativeComponent('RCTWKWebView', WKWebView, {
   nativeOnly: {

@@ -8,6 +8,7 @@ import ReactNative, {
   StyleSheet,
   UIManager,
   View,
+  ViewPropTypes,
   NativeModules,
   Text,
   ActivityIndicator
@@ -294,7 +295,7 @@ WKWebView.JSNavigationScheme = JSNavigationScheme
 WKWebView.NavigationType = NavigationType
 
 WKWebView.propTypes = {
-  ...View.propTypes,
+  ...ViewPropTypes,
 
   html: deprecatedPropType(
     PropTypes.string,
@@ -392,7 +393,7 @@ WKWebView.propTypes = {
   onNavigationStateChange: PropTypes.func,
   scalesPageToFit: PropTypes.bool,
   startInLoadingState: PropTypes.bool,
-  style: View.propTypes.style,
+  style: ViewPropTypes.style,
   /**
    * Sets the JS to be injected when the webpage loads.
    */

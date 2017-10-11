@@ -8,6 +8,7 @@
 #import <React/RCTBridgeModule.h>
 
 #import <WebKit/WebKit.h>
+#import <UIKit/UIKit.h>
 
 @interface RCTWKWebViewManager () <RCTWKWebViewDelegate>
 
@@ -26,6 +27,16 @@ RCT_EXPORT_MODULE()
   RCTWKWebView *webView = [[RCTWKWebView alloc] initWithProcessPool:[[WKProcessPool alloc] init]];
   webView.delegate = self;
   return webView;
+}
+
+- (NSDictionary *)constantsToExport {
+  return @{
+    @"DEFAULT_USER_AGENT": [[[UIWebView alloc] init] stringByEvaluatingJavaScriptFromString: @"navigator.userAgent"]
+  };
+}
+
+- (BOOL)requiresMainQueueSetup {
+  return YES;
 }
 
 RCT_EXPORT_VIEW_PROPERTY(source, NSDictionary)
@@ -79,7 +90,7 @@ RCT_EXPORT_METHOD(canGoBack:(nonnull NSNumber *)reactTag
 {
   [self.bridge.uiManager addUIBlock:^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, RCTWKWebView *> *viewRegistry) {
     RCTWKWebView *view = viewRegistry[reactTag];
-    
+
     resolve([NSNumber numberWithBool:[view canGoBack]]);
   }];
 }
@@ -90,7 +101,7 @@ RCT_EXPORT_METHOD(canGoForward:(nonnull NSNumber *)reactTag
 {
   [self.bridge.uiManager addUIBlock:^(__unused RCTUIManager *uiManager, NSDictionary<NSNumber *, RCTWKWebView *> *viewRegistry) {
     RCTWKWebView *view = viewRegistry[reactTag];
-    
+
     resolve([NSNumber numberWithBool:[view canGoForward]]);
   }];
 }

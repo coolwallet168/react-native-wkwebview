@@ -8,6 +8,7 @@
 #import <React/RCTBridgeModule.h>
 
 #import <WebKit/WebKit.h>
+#import <WebKit/WKWebsiteDataStore.h>
 #import <UIKit/UIKit.h>
 
 @interface RCTWKWebViewManager () <RCTWKWebViewDelegate>
@@ -183,6 +184,12 @@ RCT_EXPORT_METHOD(startLoadWithResult:(BOOL)result lockIdentifier:(NSInteger)loc
     RCTLogWarn(@"startLoadWithResult invoked with invalid lockIdentifier: "
                "got %zd, expected %zd", lockIdentifier, _shouldStartLoadLock.condition);
   }
+}
+
+RCT_EXPORT_METHOD(clearAllData) {
+  NSSet *websiteDataTypes = [WKWebsiteDataStore allWebsiteDataTypes];
+  NSDate *dateFrom = [NSDate dateWithTimeIntervalSince1970:0];
+  [[WKWebsiteDataStore defaultDataStore] removeDataOfTypes:websiteDataTypes modifiedSince:dateFrom completionHandler:^{}];
 }
 
 @end

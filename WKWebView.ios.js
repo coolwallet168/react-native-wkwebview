@@ -482,5 +482,6 @@ var styles = StyleSheet.create({
 });
 
 WKWebView.DEFAULT_USER_AGENT = WKWebViewManager.DEFAULT_USER_AGENT
+WKWebView.clearAllData = WKWebViewManager.clearAllData
 
 export default WKWebView;

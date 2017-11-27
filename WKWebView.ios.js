@@ -81,6 +81,9 @@ class WKWebView extends Component {
     this._onLoadingFinish = this._onLoadingFinish.bind(this);
     this._onProgress = this._onProgress.bind(this);
     this._onMessage = this._onMessage.bind(this);
+    this._onURLChange = this._onURLChange.bind(this);
+    this._onTitleChange = this._onTitleChange.bind(this);
+    this._onLoadingChange = this._onLoadingChange.bind(this);
   }
 
   componentWillMount () {
@@ -160,6 +163,9 @@ class WKWebView extends Component {
         onProgress={this._onProgress}
         onMessage={this._onMessage}
         onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
+        onURLChange={this._onURLChange}
+        onTitleChange={this._onTitleChange}
+        onLoadingChange={this._onLoadingChange}
         pagingEnabled={this.props.pagingEnabled}
         directionalLockEnabled={this.props.directionalLockEnabled}
       />;
@@ -289,6 +295,21 @@ class WKWebView extends Component {
     var onMessage = this.props.onMessage;
     onMessage && onMessage(event.nativeEvent);
   }
+
+  _onURLChange (event) {
+    var onURLChange = this.props.onURLChange;
+    onURLChange && onURLChange(event.nativeEvent.url);
+  }
+
+  _onTitleChange (event) {
+    var onTitleChange = this.props.onTitleChange;
+    onTitleChange && onTitleChange(event.nativeEvent.title);
+  }
+
+  _onLoadingChange (event) {
+    var onLoadingChange = this.props.onLoadingChange;
+    onLoadingChange && onLoadingChange(event.nativeEvent.loading);
+  }
 }
 
 WKWebView.JSNavigationScheme = JSNavigationScheme
@@ -407,6 +428,9 @@ WKWebView.propTypes = {
    * @platform ios
    */
   onShouldStartLoadWithRequest: PropTypes.func,
+  onURLChange: PropTypes.func,
+  onTitleChange: PropTypes.func,
+  onLoadingChange: PropTypes.func,
   /**
    * Copies cookies from sharedHTTPCookieStorage when calling loadRequest.
    * Set this to true to emulate behavior of WebView component.

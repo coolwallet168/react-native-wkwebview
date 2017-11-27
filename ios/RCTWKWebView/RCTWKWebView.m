@@ -33,6 +33,10 @@
 @property (nonatomic, copy) RCTDirectEventBlock onShouldStartLoadWithRequest;
 @property (nonatomic, copy) RCTDirectEventBlock onProgress;
 @property (nonatomic, copy) RCTDirectEventBlock onMessage;
+@property (nonatomic, copy) RCTDirectEventBlock onURLChange;
+@property (nonatomic, copy) RCTDirectEventBlock onTitleChange;
+@property (nonatomic, copy) RCTDirectEventBlock onLoadingChange;
+
 @property (assign) BOOL sendCookies;
 
 @end
@@ -68,7 +72,9 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     _webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:config];
     _webView.UIDelegate = self;
     _webView.navigationDelegate = self;
-    [_webView addObserver:self forKeyPath:@"estimatedProgress" options:NSKeyValueObservingOptionNew context:nil];
+    for (NSString *keyPath in @[@"estimatedProgress", @"URL", @"title", @"loading"]) {
+      [_webView addObserver:self forKeyPath:keyPath options:NSKeyValueObservingOptionNew context:nil];
+    }
 
     #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 110000 /* __IPHONE_11_0 */
     if ([_webView.scrollView respondsToSelector:@selector(setContentInsetAdjustmentBehavior:)]) {
@@ -278,18 +284,25 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
                         change:(NSDictionary *)change
                        context:(void *)context
 {
-  if ([keyPath isEqualToString:@"estimatedProgress"]) {
-    if (!_onProgress) {
-      return;
-    }
-    _onProgress(@{@"progress": [change objectForKey:NSKeyValueChangeNewKey]});
+  id newValue = [change objectForKey:NSKeyValueChangeNewKey];
+
+  if ([keyPath isEqualToString:@"estimatedProgress"] && _onProgress) {
+    _onProgress(@{@"progress": newValue});
+  } else if ([keyPath isEqualToString:@"URL"] && _onURLChange) {
+    _onURLChange(@{@"url": ((NSURL *)newValue).absoluteString});
+  } else if ([keyPath isEqualToString:@"title"] && _onTitleChange) {
+    _onTitleChange(@{@"title": newValue});
+  } else if ([keyPath isEqualToString:@"loading"] && _onLoadingChange) {
+    _onLoadingChange(@{@"loading": newValue});
   }
 }
 
 - (void)dealloc
 {
   @try {
-    [_webView removeObserver:self forKeyPath:@"estimatedProgress"];
+    for (NSString *keyPath in @[@"estimatedProgress", @"URL", @"title", @"loading"]) {
+      [_webView removeObserver:self forKeyPath:keyPath];
+    }
   }
   @catch (NSException * __unused exception) {}
 }

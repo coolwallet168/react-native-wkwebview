@@ -72,6 +72,8 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     _webView = [[WKWebView alloc] initWithFrame:self.bounds configuration:config];
     _webView.UIDelegate = self;
     _webView.navigationDelegate = self;
+    _webView.allowsLinkPreview = NO;
+
     for (NSString *keyPath in @[@"estimatedProgress", @"URL", @"title", @"loading"]) {
       [_webView addObserver:self forKeyPath:keyPath options:NSKeyValueObservingOptionNew context:nil];
     }

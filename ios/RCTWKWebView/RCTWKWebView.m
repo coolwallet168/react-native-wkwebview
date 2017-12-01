@@ -291,7 +291,9 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
   if ([keyPath isEqualToString:@"estimatedProgress"] && _onProgress) {
     _onProgress(@{@"progress": newValue});
   } else if ([keyPath isEqualToString:@"URL"] && _onURLChange) {
-    _onURLChange(@{@"url": ((NSURL *)newValue).absoluteString});
+    NSMutableDictionary<NSString *, id> *event = [self baseEvent];
+    event[@"url"] = ((NSURL *)newValue).absoluteString;
+    _onURLChange(event);
   } else if ([keyPath isEqualToString:@"title"] && _onTitleChange) {
     _onTitleChange(@{@"title": newValue});
   } else if ([keyPath isEqualToString:@"loading"] && _onLoadingChange) {

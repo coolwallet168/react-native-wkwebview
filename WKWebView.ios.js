@@ -298,7 +298,8 @@ class WKWebView extends Component {
 
   _onURLChange (event) {
     var onURLChange = this.props.onURLChange;
-    onURLChange && onURLChange(event.nativeEvent.url);
+    onURLChange && onURLChange(event);
+    this._updateNavigationState(event);
   }
 
   _onTitleChange (event) {

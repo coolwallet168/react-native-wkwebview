@@ -292,7 +292,11 @@ RCT_NOT_IMPLEMENTED(- (instancetype)initWithCoder:(NSCoder *)aDecoder)
     _onProgress(@{@"progress": newValue});
   } else if ([keyPath isEqualToString:@"URL"] && _onURLChange) {
     NSMutableDictionary<NSString *, id> *event = [self baseEvent];
-    event[@"url"] = ((NSURL *)newValue).absoluteString;
+    if ([newValue respondsToSelector:@selector(absoluteString)]) {
+      event[@"url"] = ((NSURL *)newValue).absoluteString;
+    } else {
+      event[@"url"] = @"";
+    }
     _onURLChange(event);
   } else if ([keyPath isEqualToString:@"title"] && _onTitleChange) {
     _onTitleChange(@{@"title": newValue});
